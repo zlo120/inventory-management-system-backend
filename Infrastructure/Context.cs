@@ -34,6 +34,7 @@ namespace Infrastructure
 
         public DbSet<User> Users { get; set; }
         public DbSet<InventoryItem> InventoryItems { get; set; }
+        public DbSet<Security> Securities { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -45,11 +46,14 @@ namespace Infrastructure
             modelBuilder.Entity<User>()
                 .HasIndex(u => u.Email)
                 .IsUnique();
-
+                        
             modelBuilder.Entity<InventoryItem>()
                 .Property(u => u.Id)
                 .HasColumnName("id")
                 .IsRequired();
+
+            modelBuilder.Entity<Security>()
+                .HasOne(s => s.User);
         }
     }
 }

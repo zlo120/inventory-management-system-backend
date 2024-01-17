@@ -1,10 +1,21 @@
+using Core.Interfaces;
 using Infrastructure;
+using Infrastructure.Repositories;
+using Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddDbContext<Context>(options => options.UseSqlServer(builder.Configuration["ConnectionStrings:DBConnection"]));
+
+builder.Services.AddTransient<ISecurityService, SecurityService>();
+builder.Services.AddTransient<ISecurityRepository, SecurityRepository>();
+builder.Services.AddTransient<IUserService, UserService>();
+builder.Services.AddTransient<IUserRepository, UserRepository>();
+builder.Services.AddTransient<IInventoryItemService, InventoryItemService>();
+builder.Services.AddTransient<IInventoryItemRepository, InventoryItemRepository>();
+
 builder.Services.AddControllers().AddNewtonsoftJson();
 builder.Services.AddCors();
 
@@ -24,6 +35,9 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+// Handle cors better than this
+app.UseCors(x => x.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader().WithExposedHeaders("X-Pagination"));
 
 app.UseAuthorization();
 

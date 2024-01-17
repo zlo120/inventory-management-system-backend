@@ -8,7 +8,7 @@ namespace Core.Interfaces
         Task<bool> Create(CreateUserValidator userInfo);
         Task<User> GetUserByEmail(string email);
         Task<User> GetUserById(int id);
-        Task<bool> UpdateUser(User user);
+        Task<bool> UpdateUser(UpdateUserValidator updatedUserInfo);
         Task<bool> DeleteUser(int id);
     }
 }

@@ -7,9 +7,11 @@ namespace Infrastructure.Services
     public class UserService : IUserService
     {
         private readonly IUserRepository _userRepository;
-        public UserService(IUserRepository userRepository)
+        private readonly ISecurityService _securityService;
+        public UserService(IUserRepository userRepository, ISecurityService securityService)
         {
             _userRepository = userRepository;
+            _securityService = securityService;
         }
 
         public async Task<bool> Create(CreateUserValidator userInfo)
@@ -32,9 +34,9 @@ namespace Infrastructure.Services
             return await _userRepository.GetUserById(id);
         }
 
-        public async Task<bool> UpdateUser(User user)
+        public async Task<bool> UpdateUser(UpdateUserValidator updatedUserInfo)
         {
-            return await _userRepository.UpdateUser(user);
+            return await _securityService.Update(updatedUserInfo);
         }
         public async Task<bool> DeleteUser(int id)
         {
