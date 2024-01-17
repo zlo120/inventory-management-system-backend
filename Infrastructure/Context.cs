@@ -1,10 +1,18 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Core.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure
 {
     public class Context : DbContext
     {
+        public Context()
+        {
+
+        }
+
         public Context(string connectionString) : base(GetOptions(connectionString)) { }
+
+        public Context(DbContextOptions<Context> options) : base(options) { }
 
         public static DbContextOptions GetOptions(string connectionString)
         {
@@ -16,12 +24,32 @@ namespace Infrastructure
             optionsBuilder.UseLazyLoadingProxies();
             optionsBuilder.EnableSensitiveDataLogging();
 
-            optionsBuilder.UseSqlServer("server=127.0.0.1;uid=root;pwd=Wasd123!;database=ims-db");
+            optionsBuilder.UseSqlServer("conn string");
 
             // For using localDb
             //optionsBuilder.UseSqlServer("conn string");
             // also optional to add this to make the migrations assembly to "ASP NET template"
             //, b => b.MigrationsAssembly("ASP NET Template");
+        }
+
+        public DbSet<User> Users { get; set; }
+        public DbSet<InventoryItem> InventoryItems { get; set; }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<User>()
+                .Property(u => u.Id)
+                .HasColumnName("id")
+                .IsRequired();
+
+            modelBuilder.Entity<User>()
+                .HasIndex(u => u.Email)
+                .IsUnique();
+
+            modelBuilder.Entity<InventoryItem>()
+                .Property(u => u.Id)
+                .HasColumnName("id")
+                .IsRequired();
         }
     }
 }
