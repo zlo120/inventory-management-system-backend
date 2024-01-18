@@ -4,7 +4,6 @@ using Core.Models;
 using Infrastructure.Services;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
-using System.Text;
 
 namespace inventory_management_system_backend.Controllers
 {
@@ -57,11 +56,11 @@ namespace inventory_management_system_backend.Controllers
         {
             var userInDb = await _userService.GetUserByEmail(userInfo.Email);
             if (userInDb is not null) return BadRequest("A user with that email already exists");
-            
+
             if (!await _userService.Create(userInfo)) return BadRequest("Something went wrong creating your account");
 
             var user = _userService.GetUserByEmail(userInfo.Email).Result;
-            
+
             var userSecurity = new Security()
             {
                 UserId = user.Id,
@@ -70,7 +69,7 @@ namespace inventory_management_system_backend.Controllers
             };
 
             if (!await _securityService.Create(userSecurity)) return BadRequest("Something went wrong creating your security");
-            
+
             return Ok("User has been created");
         }
 

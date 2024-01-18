@@ -1,5 +1,4 @@
-﻿using Core.DataValidators;
-using Core.Interfaces;
+﻿using Core.Interfaces;
 using Core.Models;
 
 namespace Infrastructure.Services
@@ -12,23 +11,8 @@ namespace Infrastructure.Services
             _inventoryItemRepository = inventoryItemRepository;
         }
 
-        public async Task<bool> Create(CreateInventoryItemValidator inventoryItemInfo)
+        public async Task<bool> Create(InventoryItem inventoryItem)
         {
-            var inventoryItem = new InventoryItem()
-            {
-                Serial = inventoryItemInfo.Serial,
-                Name = inventoryItemInfo.Name,
-                Supplier = inventoryItemInfo.Supplier,
-                Date = inventoryItemInfo.Date,
-                Quantity = inventoryItemInfo.Quantity,
-                Notes = inventoryItemInfo.Notes,
-                ALVLP = inventoryItemInfo.ALVLP,
-                UL = inventoryItemInfo.UL,
-                MDM = inventoryItemInfo.MDM,
-                Reset = inventoryItemInfo.Reset,
-                GTG = inventoryItemInfo.GTG
-            };
-
             return await _inventoryItemRepository.Create(inventoryItem);
         }
 
@@ -42,7 +26,7 @@ namespace Infrastructure.Services
             return await _inventoryItemRepository.GetItemByID(id);
         }
 
-        public async Task<InventoryItem> GetItemBySerial(string serial)
+        public async Task<List<InventoryItem>> GetItemBySerial(string serial)
         {
             return await _inventoryItemRepository.GetItemBySerial(serial);
         }
@@ -50,6 +34,31 @@ namespace Infrastructure.Services
         public async Task<bool> UpdateItem(InventoryItem inventoryItem)
         {
             return await _inventoryItemRepository.UpdateItem(inventoryItem);
+        }
+
+        public async Task<List<DateTime>> GetDistinctDates()
+        {
+            return await _inventoryItemRepository.GetDistinctDates();
+        }
+
+        public async Task<List<InventoryItem>> GetInventoryByDate(DateTime date)
+        {
+            return await _inventoryItemRepository.GetInventoryByDate(date);
+        }
+
+        public async Task<List<InventoryItem>> GetAll()
+        {
+            return await _inventoryItemRepository.GetAll();
+        }
+
+        public async Task<List<InventoryItem>> GetItemByName(string name)
+        {
+            return await _inventoryItemRepository.GetItemByName(name);
+        }
+
+        public async Task<List<InventoryItem>> GetItemByDate(DateTime date)
+        {
+            return await _inventoryItemRepository.GetItemByDate(date);
         }
     }
 }

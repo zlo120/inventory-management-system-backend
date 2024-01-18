@@ -35,9 +35,9 @@ namespace Infrastructure.Repositories
             return await _context.InventoryItems.Where(u => u.Id == id).FirstOrDefaultAsync();
         }
 
-        public async Task<InventoryItem> GetItemBySerial(string serial)
+        public async Task<List<InventoryItem>> GetItemBySerial(string serial)
         {
-            return await _context.InventoryItems.Where(u => u.Serial == serial).FirstOrDefaultAsync();
+            return await _context.InventoryItems.Where(u => u.Serial == serial).ToListAsync();
         }
 
         public async Task<bool> UpdateItem(InventoryItem inventoryItem)
@@ -95,6 +95,36 @@ namespace Infrastructure.Repositories
                 _logger.LogCritical($"Critical error occured when saving changes: {ex}", DateTime.UtcNow.ToLongTimeString());
                 return false;
             }
+        }
+
+        public async Task<List<DateTime>> GetDistinctDates()
+        {
+            return await _context.InventoryItems
+                .Select(item => item.Date.Date)
+                .Distinct()
+                .ToListAsync();
+        }
+
+        public async Task<List<InventoryItem>> GetInventoryByDate(DateTime date)
+        {
+            return await _context.InventoryItems
+                .Where(item => item.Date.Date == date.Date)
+                .ToListAsync();
+        }
+
+        public async Task<List<InventoryItem>> GetAll()
+        {
+            return await _context.InventoryItems.ToListAsync();
+        }
+
+        public async Task<List<InventoryItem>> GetItemByName(string name)
+        {
+            return await _context.InventoryItems.Where(i => i.Name.Contains(name)).ToListAsync();
+        }
+
+        public async Task<List<InventoryItem>> GetItemByDate(DateTime date)
+        {
+            return await _context.InventoryItems.Where(i => i.Date.Date == date).ToListAsync();
         }
     }
 }

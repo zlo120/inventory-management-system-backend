@@ -7,7 +7,7 @@
         public string Supplier { get; set; }
         public DateTime Date { get; set; }
         public int Quantity { get; set; }
-        public string Notes { get; set; }
+        public string? Notes { get; set; }
         public bool? ALVLP { get; set; }
         public bool? UL { get; set; }
         public bool? MDM { get; set; }
