@@ -4,6 +4,7 @@ namespace Core.DataValidators
 {
     public class InventoryValidator
     {
+        public int? Id { get; set; }
         [Required]
         public string serialimei { get; set; }
         [Required]

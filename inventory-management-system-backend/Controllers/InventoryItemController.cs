@@ -91,6 +91,36 @@ namespace inventory_management_system_backend.Controllers
             return Ok("Successful!");
         }
 
+        [HttpPost("UpdateDate")]
+        public async Task<IActionResult> UpdateDate(InsertInventoryValidator updateInventoryValidator)
+        {
+            foreach(var item in updateInventoryValidator.InventoryItems)
+            {
+                var inventoryItem = new InventoryItem()
+                {
+                    Id = item.Id.Value,
+                    Serial = item.serialimei.ToString(),
+                    Name = item.name,
+                    Supplier = item.supplier,
+                    Date = item.date,
+                    Quantity = item.quantity,
+                    Notes = item.notes,
+                    ALVLP = item.alvlp,
+                    UL = item.ul,
+                    MDM = item.mdm,
+                    Reset = item.reset,
+                    GTG = item.gtg
+                };
+
+                if (!await _inventoryItemService.UpdateItem(inventoryItem))
+                {
+                    return BadRequest("An error has occured...");
+                }
+            }
+
+            return Ok("Successful!");
+        }
+        
         [HttpGet("GetAllDates")]
         public async Task<IActionResult> GetAllDates()
         {

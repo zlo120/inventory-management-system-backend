@@ -45,9 +45,11 @@ namespace Infrastructure.Repositories
             var originalItem = await _context.InventoryItems.Where(i => i.Id == inventoryItem.Id).FirstOrDefaultAsync();
             if (originalItem is null)
             {
+                Console.WriteLine("Couldn't find item based on ID");
                 return false;
             }
 
+            originalItem.Serial = inventoryItem.Serial;
             originalItem.Name = inventoryItem.Name;
             originalItem.Supplier = inventoryItem.Supplier;
             originalItem.Date = inventoryItem.Date;
