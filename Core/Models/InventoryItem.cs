@@ -1,4 +1,6 @@
-﻿namespace Core.Models
+﻿using System.Text.Json.Serialization;
+
+namespace Core.Models
 {
     public class InventoryItem : BaseModel
     {
@@ -13,5 +15,8 @@
         public bool? MDM { get; set; }
         public bool? Reset { get; set; }
         public bool? GTG { get; set; }
+        public int LocationId { get; set; }
+        [JsonIgnore]
+        public virtual Location Location { get; set; }
     }
 }
