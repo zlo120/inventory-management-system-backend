@@ -128,5 +128,10 @@ namespace Infrastructure.Repositories
         {
             return await _context.InventoryItems.Where(i => i.Date.Date == date).ToListAsync();
         }
+
+        public async Task<List<InventoryItem>> GetInventoryByLocation(int locationId)
+        {
+            return await _context.InventoryItems.Where(i => i.Location.Id == locationId).ToListAsync();
+        }
     }
 }

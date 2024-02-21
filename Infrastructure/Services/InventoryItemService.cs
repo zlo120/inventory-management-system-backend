@@ -60,5 +60,10 @@ namespace Infrastructure.Services
         {
             return await _inventoryItemRepository.GetItemByDate(date);
         }
+
+        public async Task<List<InventoryItem>> GetInventoryByLocation(int locationId)
+        {
+            return await _inventoryItemRepository.GetInventoryByLocation(locationId);
+        }
     }
 }
