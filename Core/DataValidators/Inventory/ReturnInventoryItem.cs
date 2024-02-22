@@ -21,5 +21,7 @@ namespace Core.DataValidators.Inventory
         public bool? mdm { get; set; }
         public bool? reset { get; set; }
         public bool? gtg { get; set; }
+        public Models.Status Status { get; set; }
+        public Models.Location Location { get; set; }
     }
 }

@@ -60,7 +60,9 @@ namespace inventory_management_system_backend.Controllers
                     ul = item.UL,
                     mdm = item.MDM,
                     reset = item.Reset,
-                    gtg = item.GTG
+                    gtg = item.GTG,
+                    Status = item.Status,
+                    Location = item.Location,
                 };
 
                 items.Add(inventoryItemToReturn);
@@ -171,7 +173,9 @@ namespace inventory_management_system_backend.Controllers
                         ul = item.UL,
                         mdm = item.MDM,
                         reset = item.Reset,
-                        gtg = item.GTG
+                        gtg = item.GTG,
+                        Status = item.Status,
+                        Location = item.Location,
                     };
 
                     items.Add(inventoryItemToReturn);
