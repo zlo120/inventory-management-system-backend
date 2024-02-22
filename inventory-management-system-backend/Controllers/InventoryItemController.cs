@@ -70,69 +70,6 @@ namespace inventory_management_system_backend.Controllers
 
             return Ok(items);
         }
-
-        [HttpPost]
-        public async Task<IActionResult> Post(InsertInventoryValidator insertInventoryValidator)
-        {
-            var status = await _statusService.GetStatusByID(1);
-            var warehouse = await _locationService.GetLocationByID(1);
-            foreach (var item in insertInventoryValidator.InventoryItems)
-            {
-                var inventoryItem = new InventoryItem()
-                {
-                    Serial = item.serialimei.ToString(),
-                    Name = item.name,
-                    Supplier = item.supplier,
-                    Date = item.date,
-                    Quantity = item.quantity,
-                    Notes = item.notes,
-                    ALVLP = item.alvlp,
-                    UL = item.ul,
-                    MDM = item.mdm,
-                    Reset = item.reset,
-                    GTG = item.gtg,
-                    LocationId = 1,
-                    StatusId = 1
-                };
-
-                if (!await _inventoryItemService.Create(inventoryItem))
-                {
-                    return BadRequest("An error has occurred...");
-                }
-            }
-
-            return Ok("Successful!");
-        }
-
-        [HttpPost("UpdateDate")]
-        public async Task<IActionResult> UpdateDate(InsertInventoryValidator updateInventoryValidator)
-        {
-            foreach(var item in updateInventoryValidator.InventoryItems)
-            {
-                var inventoryItem = new InventoryItem()
-                {
-                    Id = item.Id.Value,
-                    Serial = item.serialimei.ToString(),
-                    Name = item.name,
-                    Supplier = item.supplier,
-                    Date = item.date,
-                    Quantity = item.quantity,
-                    Notes = item.notes,
-                    ALVLP = item.alvlp,
-                    UL = item.ul,
-                    MDM = item.mdm,
-                    Reset = item.reset,
-                    GTG = item.gtg
-                };
-
-                if (!await _inventoryItemService.UpdateItem(inventoryItem))
-                {
-                    return BadRequest("An error has occured...");
-                }
-            }
-
-            return Ok("Successful!");
-        }
         
         [HttpGet("GetAllDates")]
         public async Task<IActionResult> GetAllDates()
@@ -204,7 +141,96 @@ namespace inventory_management_system_backend.Controllers
 
         }
 
-        [HttpPost("TransferInventory")]
+        [HttpGet("GetInventoryByStatus")]
+        public async Task<IActionResult> GetInventoryByStatus([Required][FromQuery] int statusId)
+        {
+            var inventory = await _inventoryItemService.GetInventoryByStatus(statusId);
+            return Ok(inventory);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Post(InsertInventoryValidator insertInventoryValidator)
+        {
+            var status = await _statusService.GetStatusByID(1);
+            var warehouse = await _locationService.GetLocationByID(1);
+            foreach (var item in insertInventoryValidator.InventoryItems)
+            {
+                var inventoryItem = new InventoryItem()
+                {
+                    Serial = item.serialimei.ToString(),
+                    Name = item.name,
+                    Supplier = item.supplier,
+                    Date = item.date,
+                    Quantity = item.quantity,
+                    Notes = item.notes,
+                    ALVLP = item.alvlp,
+                    UL = item.ul,
+                    MDM = item.mdm,
+                    Reset = item.reset,
+                    GTG = item.gtg,
+                    LocationId = 1,
+                    StatusId = 1
+                };
+
+                if (!await _inventoryItemService.Create(inventoryItem))
+                {
+                    return BadRequest("An error has occurred...");
+                }
+            }
+
+            return Ok("Successful!");
+        }
+
+        [HttpPut]
+        public async Task<IActionResult> Put(InsertInventoryValidator updateInventoryValidator)
+        {
+            foreach(var item in updateInventoryValidator.InventoryItems)
+            {
+                var inventoryItem = new InventoryItem()
+                {
+                    Id = item.Id.Value,
+                    Serial = item.serialimei.ToString(),
+                    Name = item.name,
+                    Supplier = item.supplier,
+                    Date = item.date,
+                    Quantity = item.quantity,
+                    Notes = item.notes,
+                    ALVLP = item.alvlp,
+                    UL = item.ul,
+                    MDM = item.mdm,
+                    Reset = item.reset,
+                    GTG = item.gtg
+                };
+
+                if (!await _inventoryItemService.UpdateItem(inventoryItem))
+                {
+                    return BadRequest("An error has occured...");
+                }
+            }
+
+            return Ok("Successful!");
+        }
+        
+        [HttpPut("UpdateInventoryStatus")]
+        public async Task<IActionResult> UpdateInventoryStatus(UpdateInventoryStatusValidator updatedInfo)
+        {
+            try
+            {
+                await _inventoryItemService.UpdateStatus(updatedInfo.InventoryId, updatedInfo.StatusId);
+            }
+            catch (InventoryItemNotFoundException)
+            {
+                return BadRequest($"The inventory item with the ID {updatedInfo.InventoryId} does not exist.");
+            }
+            catch (StatusNotFoundException)
+            {
+                return BadRequest($"A status with the ID {updatedInfo.StatusId} does not exist.");
+            }
+
+            return Ok("Updated!");
+        }
+
+        [HttpPut("TransferInventory")]
         public async Task<IActionResult> TransferInventory(TransferInventoryValidator transferInfo)
         {
             try
@@ -224,6 +250,6 @@ namespace inventory_management_system_backend.Controllers
             }
             
             return Ok("Transfer successful!");
-        }
+        }        
     }
 }

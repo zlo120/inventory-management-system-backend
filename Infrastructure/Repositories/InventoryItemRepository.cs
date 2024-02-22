@@ -157,5 +157,34 @@ namespace Infrastructure.Repositories
                 return false;
             }
         }
+
+        public async Task<List<InventoryItem>> GetInventoryByStatus(int statusId)
+        {
+            return await _context.InventoryItems.Where(i => i.StatusId == statusId).ToListAsync();
+        }
+
+        public async Task<bool> UpdateStatus(int inventoryId, int statusId)
+        {
+            var inventoryItem = await _context.InventoryItems.Where(i => i.Id == inventoryId).FirstOrDefaultAsync()
+                ?? throw new InventoryItemNotFoundException();
+
+            var status = await _context.Status.Where(s => s.Id == statusId).FirstOrDefaultAsync()
+                ?? throw new StatusNotFoundException();
+
+            inventoryItem.StatusId = status.Id;
+
+            _context.Update(inventoryItem);
+
+            try
+            {
+                await _context.SaveChangesAsync();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogCritical($"Critical error occurred when saving changes: {ex}", DateTime.UtcNow.ToLongTimeString());
+                return false;
+            }
+        }
     }
 }
