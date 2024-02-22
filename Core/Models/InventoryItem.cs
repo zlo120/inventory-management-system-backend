@@ -1,4 +1,4 @@
-﻿using System.Text.Json.Serialization;
+﻿using Newtonsoft.Json;
 
 namespace Core.Models
 {
@@ -16,5 +16,11 @@ namespace Core.Models
         public bool? Reset { get; set; }
         public bool? GTG { get; set; }
         public int LocationId { get; set; }
+
+        [JsonIgnore]
+        public virtual Location Location { get; set; }
+        public int StatusId { get; set; }
+        [JsonIgnore]
+        public virtual Status Status { get; set; }
     }
 }

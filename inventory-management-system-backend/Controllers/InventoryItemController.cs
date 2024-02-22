@@ -15,13 +15,15 @@ namespace inventory_management_system_backend.Controllers
     public class InventoryItemController : ControllerBase
     {
         private readonly IInventoryItemService _inventoryItemService;
+        private readonly IStatusService _statusService;
         private readonly ILocationService _locationService;
         private readonly ILogger<InventoryItemController> _logger;
-        public InventoryItemController(ILogger<InventoryItemController> logger, IInventoryItemService inventoryItemService, ILocationService locationService)
+        public InventoryItemController(ILogger<InventoryItemController> logger, IStatusService statusService, IInventoryItemService inventoryItemService, ILocationService locationService)
         {
             _logger = logger;
             _inventoryItemService = inventoryItemService;
             _locationService = locationService;
+            _statusService = statusService;
         }
 
         [HttpGet]
@@ -70,6 +72,7 @@ namespace inventory_management_system_backend.Controllers
         [HttpPost]
         public async Task<IActionResult> Post(InsertInventoryValidator insertInventoryValidator)
         {
+            var status = await _statusService.GetStatusByID(1);
             var warehouse = await _locationService.GetLocationByID(1);
             foreach (var item in insertInventoryValidator.InventoryItems)
             {
@@ -86,7 +89,8 @@ namespace inventory_management_system_backend.Controllers
                     MDM = item.mdm,
                     Reset = item.reset,
                     GTG = item.gtg,
-                    LocationId = 1
+                    LocationId = 1,
+                    StatusId = 1
                 };
 
                 if (!await _inventoryItemService.Create(inventoryItem))
