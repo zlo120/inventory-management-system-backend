@@ -1,4 +1,4 @@
-﻿using Core.DataValidators;
+﻿using Core.DataValidators.User;
 using Core.Models;
 
 namespace Core.Interfaces

@@ -1,4 +1,5 @@
-﻿using Core.DataValidators;
+﻿using Core.DataValidators.Inventory;
+using Core.Exceptions;
 using Core.Interfaces;
 using Core.Models;
 using Microsoft.AspNetCore.Authorization;
@@ -14,11 +15,13 @@ namespace inventory_management_system_backend.Controllers
     public class InventoryItemController : ControllerBase
     {
         private readonly IInventoryItemService _inventoryItemService;
+        private readonly ILocationService _locationService;
         private readonly ILogger<InventoryItemController> _logger;
-        public InventoryItemController(ILogger<InventoryItemController> logger, IInventoryItemService inventoryItemService)
+        public InventoryItemController(ILogger<InventoryItemController> logger, IInventoryItemService inventoryItemService, ILocationService locationService)
         {
             _logger = logger;
             _inventoryItemService = inventoryItemService;
+            _locationService = locationService;
         }
 
         [HttpGet]
@@ -67,6 +70,7 @@ namespace inventory_management_system_backend.Controllers
         [HttpPost]
         public async Task<IActionResult> Post(InsertInventoryValidator insertInventoryValidator)
         {
+            var warehouse = await _locationService.GetLocationByID(1);
             foreach (var item in insertInventoryValidator.InventoryItems)
             {
                 var inventoryItem = new InventoryItem()
@@ -81,12 +85,13 @@ namespace inventory_management_system_backend.Controllers
                     UL = item.ul,
                     MDM = item.mdm,
                     Reset = item.reset,
-                    GTG = item.gtg
+                    GTG = item.gtg,
+                    LocationId = 1
                 };
 
                 if (!await _inventoryItemService.Create(inventoryItem))
                 {
-                    return BadRequest("An error has occured...");
+                    return BadRequest("An error has occurred...");
                 }
             }
 
@@ -174,6 +179,43 @@ namespace inventory_management_system_backend.Controllers
             {
                 return BadRequest("Something went wrong when parsing your date...");
             }
+        }
+
+        [HttpGet("GetInventoryByLocation")]
+        public async Task<IActionResult> GetInventoryByLocation([Required][FromQuery] int locationId)
+        {
+            try
+            {
+                var inventory = await _locationService.GetAllInventory(locationId);
+                return Ok(inventory);
+            }
+            catch (LocationNotFoundException)
+            {
+                return BadRequest($"A location with ID {locationId} does not exist!");
+            }
+
+        }
+
+        [HttpPost("TransferInventory")]
+        public async Task<IActionResult> TransferInventory(TransferInventoryValidator transferInfo)
+        {
+            try
+            {
+                if (!await _inventoryItemService.TransferItem(transferInfo.InventoryID, transferInfo.LocationID))
+                {
+                    return BadRequest("An error occurred while transferring");
+                }
+            }
+            catch(LocationNotFoundException)
+            {
+                return BadRequest("A location with that ID does not exist.");
+            }
+            catch(InventoryItemNotFoundException)
+            {
+                return BadRequest("An inventory item with that ID does not exist.");
+            }
+            
+            return Ok("Transfer successful!");
         }
     }
 }

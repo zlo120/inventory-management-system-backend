@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Core.DataValidators
+namespace Core.DataValidators.Inventory
 {
     public class InsertInventoryValidator
     {

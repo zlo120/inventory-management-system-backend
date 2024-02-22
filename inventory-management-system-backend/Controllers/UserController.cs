@@ -1,4 +1,5 @@
-﻿using Core.DataValidators;
+﻿using Core.DataValidators.Inventory;
+using Core.DataValidators.User;
 using Core.Interfaces;
 using Core.Models;
 using Infrastructure.Services;
@@ -140,8 +141,6 @@ namespace inventory_management_system_backend.Controllers
         [HttpPut]
         public async Task<IActionResult> Update(UpdateUserValidator updatedUserInfo)
         {
-            // Authenticate first
-
             var userInDb = await _userService.GetUserByEmail(updatedUserInfo.Email);
             if (userInDb is null)
             {
@@ -172,7 +171,6 @@ namespace inventory_management_system_backend.Controllers
 
             return BadRequest("Something went wrong");
         }
-
 
         public static void ReadJWT(string jwt)
         {

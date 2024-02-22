@@ -65,5 +65,10 @@ namespace Infrastructure.Services
         {
             return await _inventoryItemRepository.GetInventoryByLocation(locationId);
         }
+
+        public async Task<bool> TransferItem(int inventoryId, int locationId)
+        {
+            return await _inventoryItemRepository.TransferItem(inventoryId, locationId);
+        }
     }
 }

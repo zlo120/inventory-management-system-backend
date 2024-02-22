@@ -43,6 +43,8 @@ builder.Services.AddTransient<IUserService, UserService>();
 builder.Services.AddTransient<IUserRepository, UserRepository>();
 builder.Services.AddTransient<IInventoryItemService, InventoryItemService>();
 builder.Services.AddTransient<IInventoryItemRepository, InventoryItemRepository>();
+builder.Services.AddTransient<ILocationService, LocationService>();
+builder.Services.AddTransient<ILocationRepository, LocationRepository>();
 
 builder.Services.AddControllers().AddNewtonsoftJson();
 builder.Services.AddCors();

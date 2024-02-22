@@ -1,8 +1,8 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Core.DataValidators
+namespace Core.DataValidators.User
 {
-    public class UpdateUserValidator
+    public class CreateUserValidator
     {
         [Required]
         public string Email { get; set; }

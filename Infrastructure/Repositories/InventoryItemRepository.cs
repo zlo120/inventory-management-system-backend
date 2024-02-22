@@ -1,4 +1,5 @@
-﻿using Core.Interfaces;
+﻿using Core.Exceptions;
+using Core.Interfaces;
 using Core.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -9,10 +10,12 @@ namespace Infrastructure.Repositories
     {
         private readonly Context _context;
         private readonly ILogger<InventoryItemRepository> _logger;
-        public InventoryItemRepository(Context context, ILogger<InventoryItemRepository> logger)
+        private readonly ILocationService _locationService;
+        public InventoryItemRepository(Context context, ILogger<InventoryItemRepository> logger, ILocationService locationService)
         {
             _context = context;
             _logger = logger;
+            _locationService = locationService;
         }
 
         public async Task<bool> Create(InventoryItem inventoryItem)
@@ -131,7 +134,28 @@ namespace Infrastructure.Repositories
 
         public async Task<List<InventoryItem>> GetInventoryByLocation(int locationId)
         {
-            return await _context.InventoryItems.Where(i => i.Location.Id == locationId).ToListAsync();
+            return await _context.InventoryItems.Where(i => i.LocationId == locationId).ToListAsync();
+        }
+
+        public async Task<bool> TransferItem(int inventoryId, int locationId)
+        {
+            var inventoryItem = await GetItemByID(inventoryId) ?? throw new InventoryItemNotFoundException();
+            var location = await _locationService.GetLocationByID(locationId) ?? throw new LocationNotFoundException();
+
+            inventoryItem.LocationId = location.Id;
+
+            _context.Update(inventoryItem);
+
+            try
+            {
+                await _context.SaveChangesAsync();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogCritical($"Critical error occurred when saving changes: {ex}", DateTime.UtcNow.ToLongTimeString());
+                return false;
+            }
         }
     }
 }

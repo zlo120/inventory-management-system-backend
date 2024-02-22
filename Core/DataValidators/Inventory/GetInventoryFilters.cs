@@ -1,4 +1,4 @@
-﻿namespace Core.DataValidators
+﻿namespace Core.DataValidators.Inventory
 {
     public class GetInventoryFilters
     {

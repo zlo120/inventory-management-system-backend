@@ -16,5 +16,6 @@ namespace Core.Interfaces
         Task<List<DateTime>> GetDistinctDates();
         Task<List<InventoryItem>> GetInventoryByDate(DateTime date);
         Task<List<InventoryItem>> GetInventoryByLocation(int locationId);
+        Task<bool> TransferItem(int inventoryId, int locationId);
     }
 }

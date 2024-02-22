@@ -1,10 +1,10 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Core.DataValidators
+namespace Core.DataValidators.Inventory
 {
-    public class ReturnInventoryItem
+    public class InventoryValidator
     {
-        public int? id { get; set; }
+        public int? Id { get; set; }
         [Required]
         public string serialimei { get; set; }
         [Required]
@@ -12,7 +12,7 @@ namespace Core.DataValidators
         [Required]
         public string supplier { get; set; }
         [Required]
-        public string date { get; set; }
+        public DateTime date { get; set; }
         [Required]
         public int quantity { get; set; }
         public string? notes { get; set; }
