@@ -361,3 +361,6 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+/Infrastructure/Context.cs
+/Infrastructure/Migrations
+/inventory-management-system-backend/appsettings.json
