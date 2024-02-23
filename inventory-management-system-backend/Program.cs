@@ -38,6 +38,9 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddSingleton<
     IAuthorizationHandler, TokenRequirementAuthorizationHandler>();
 
+builder.Services.AddSingleton<
+    IAuthorizationHandler, AdminRequiredAuthorizationHandler>();
+
 //builder.Services.AddAuthorization();
 builder.Services.AddAuthorization(options =>
 {
@@ -46,9 +49,20 @@ builder.Services.AddAuthorization(options =>
         policy.AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme);
         policy.RequireAuthenticatedUser();
 
-
         // add the custom requirement to the policy
         policy.Requirements.Add(new TokenRequirement());
+    });
+});
+
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("AdminToken", policy =>
+    {
+        policy.AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme);
+        policy.RequireAuthenticatedUser();
+
+        // add the custom requirement to the policy
+        policy.Requirements.Add(new AdminRequired());
     });
 });
 
@@ -65,6 +79,7 @@ builder.Services.AddTransient<ILocationRepository, LocationRepository>();
 builder.Services.AddTransient<IStatusService, StatusService>();
 builder.Services.AddTransient<IStatusRepository, StatusRepository>();
 
+builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddControllers().AddNewtonsoftJson();
 builder.Services.AddCors();

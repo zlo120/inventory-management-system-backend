@@ -1,16 +1,18 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using Core.Models;
+using Microsoft.AspNetCore.Authorization;
 
 namespace inventory_management_system_backend.TokenAuthHandler
 {
-    public class TokenRequirementAuthorizationHandler : AuthorizationHandler<TokenRequirement>
+    public class AdminRequiredAuthorizationHandler : AuthorizationHandler<AdminRequired>
     {
         private readonly IHttpContextAccessor _httpContextAccessor;
-        public TokenRequirementAuthorizationHandler(IHttpContextAccessor httpContextAccessor)
+        public AdminRequiredAuthorizationHandler(IHttpContextAccessor httpContextAccessor)
         {
             _httpContextAccessor = httpContextAccessor;
         }
-        protected override Task HandleRequirementAsync(AuthorizationHandlerContext context, TokenRequirement requirement)
+        protected override Task HandleRequirementAsync(AuthorizationHandlerContext context, AdminRequired requirement)
         {
+
             if (!context.User.HasClaim(x => x.Type == "type"))
             {
                 context.Fail();
@@ -19,24 +21,23 @@ namespace inventory_management_system_backend.TokenAuthHandler
 
             var type = context.User.Claims.FirstOrDefault(x => x.Type == "type").Value;
 
-            var endpoint = _httpContextAccessor.HttpContext.GetEndpoint();
-
-            if (IsRefreshEndpoint(endpoint) && type == "refresh")
-            {
-                context.Succeed(requirement);
-                return Task.CompletedTask;
-            }
-
-            if (type == "bearer")
-            {
-                context.Succeed(requirement);
-            }
-            else
+            if (type != "bearer")
             {
                 SetCustomResponse("Invalid token type. Only 'bearer' tokens are allowed.");
                 context.Fail();
+                return Task.CompletedTask;
             }
 
+            var group = context.User.Claims.FirstOrDefault(x => x.Type == "group_id").Value;
+
+            if (!(int.Parse(group) >= (int)UserGroups.Admin))
+            {
+                SetCustomResponse("Only admins are allowed to access this endpoint.");
+                context.Fail();
+                return Task.CompletedTask;
+            }
+
+            context.Succeed(requirement);
             return Task.CompletedTask;
         }
 
@@ -53,19 +54,6 @@ namespace inventory_management_system_backend.TokenAuthHandler
             };
 
             response.WriteAsync(Newtonsoft.Json.JsonConvert.SerializeObject(responseData));
-        }
-
-        private bool IsRefreshEndpoint(Endpoint endpoint)
-        {
-            if (endpoint != null)
-            {
-                var path = _httpContextAccessor.HttpContext.Request.Path;
-                var excludedPath = "/api/User/Refresh";
-
-                return path.Equals(excludedPath, StringComparison.OrdinalIgnoreCase);
-            }
-
-            return false;
         }
     }
 }

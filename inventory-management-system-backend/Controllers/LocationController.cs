@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace inventory_management_system_backend.Controllers
 {
-    [Authorize]
+    [Authorize(Policy = "AdminToken")]
     [Route("api/[controller]")]
     [ApiController]
     public class LocationController : ControllerBase
