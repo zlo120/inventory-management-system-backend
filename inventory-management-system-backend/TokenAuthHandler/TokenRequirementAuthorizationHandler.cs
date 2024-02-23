@@ -6,7 +6,6 @@ namespace inventory_management_system_backend.TokenAuthHandler
     {
         protected override Task HandleRequirementAsync(AuthorizationHandlerContext context, TokenRequirement requirement)
         {
-            Console.WriteLine("This is being executed!");
             if (!context.User.HasClaim(x => x.Type == "type"))
             {
                 context.Fail();
