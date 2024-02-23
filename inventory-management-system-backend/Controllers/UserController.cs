@@ -1,9 +1,8 @@
-﻿using Core.DataValidators.Inventory;
-using Core.DataValidators.User;
+﻿using Core.DataValidators.User;
+using Core.Exceptions;
 using Core.Interfaces;
 using Core.Models;
 using Infrastructure.Services;
-using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
@@ -34,6 +33,9 @@ namespace inventory_management_system_backend.Controllers
         [HttpGet]
         public async Task<IActionResult> Get([Required][FromQuery] string email)
         {
+            var userId = HttpContext.User.Claims.FirstOrDefault(x => x.Value == email);
+            var userEmail = HttpContext.User.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Email)?.Value;
+
             var user = await _userService.GetUserByEmail(email);
 
             if (user is null)
@@ -50,63 +52,83 @@ namespace inventory_management_system_backend.Controllers
         {
             var userInDb = await _userService.GetUserByEmail(userInfo.Email);
             if (userInDb is null) return BadRequest(new
-                                            {
-                                                Message = "Invalid credentials",
-                                            });
+            {
+                Message = "Invalid credentials",
+            });
 
             var securityInDb = await _securityService.GetByUserEmail(userInfo.Email);
             if (securityInDb is null) return BadRequest(new
-                                                {
-                                                    Message = "An unexpected error has occured.",
-                                                });
+            {
+                Message = "An unexpected error has occurred.",
+            });
 
             if (SecurityService.VerifyPassword(userInfo.Password, securityInDb))
             {
-                // Generate JWT
-                var issuer = _configuration["Jwt:Issuer"];
-                var audience = _configuration["Jwt:Audience"];
-                var key = Encoding.ASCII.GetBytes(_configuration["Jwt:Key"]);
-
-                var tokenDescriptor = new SecurityTokenDescriptor
+                if (!userInDb.UserCreatedPassword)
                 {
-                    Subject = new ClaimsIdentity(new[]
-                        {
-                            new Claim("Id", Guid.NewGuid().ToString()),
-                            new Claim(JwtRegisteredClaimNames.Email, userInfo.Email),
-                            new Claim(JwtRegisteredClaimNames.Jti,
-                            Guid.NewGuid().ToString())
-                        }),
-                    Expires = DateTime.UtcNow.AddMinutes(5),
-                    Issuer = issuer,
-                    Audience = audience,
-                    SigningCredentials = new SigningCredentials
-                        (new SymmetricSecurityKey(key),
-                        SecurityAlgorithms.HmacSha512Signature)
-                };
+                    return Ok("You must now create your own user password.");
+                }
 
-                var tokenHandler = new JwtSecurityTokenHandler();
-                var token = tokenHandler.CreateToken(tokenDescriptor);
-                var jwtToken = tokenHandler.WriteToken(token);
-                var stringToken = tokenHandler.WriteToken(token);
-
-                var response = new
-                {
-                    Success = true,
-                    Token = stringToken
-                };
-
-                return Ok(response);
+                return Ok(GenerateTokens(userInDb.Email, userInDb.GroupId));
             }
+
             return BadRequest(new
             {
                 Message = "Invalid credentials",
             });
         }
 
+        [HttpGet("Refresh")]
+        public async Task<IActionResult> Refresh()
+        {
+            string type;
+            try
+            {
+                type = HttpContext.User.Claims.FirstOrDefault(c => c.Type == "type").Value;
+            }
+            catch (NullReferenceException)
+            {
+                return BadRequest("Bad token: can't read type claim");
+            }
+
+            if (type != "refresh") return BadRequest("This token is not a refresh token");
+
+            string email;
+            try
+            {
+                email = HttpContext.User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email).Value;
+            }
+            catch (NullReferenceException)
+            {
+                return BadRequest("Bad token: can't read email claim");
+            }
+
+            int groupId;
+            try
+            {
+                groupId = int.Parse(HttpContext.User.Claims.FirstOrDefault(c => c.Type == "group_id").Value);
+            }
+            catch (NullReferenceException)
+            {
+                return BadRequest("Bad token: can't read group id claim");
+            }
+            catch (FormatException)
+            {
+                return BadRequest("Bad token: group id claim is not an int");
+            }
+
+            return Ok(GenerateTokens(email, groupId));
+        }
+
         [HttpPost]
-        [AllowAnonymous]
         public async Task<IActionResult> Post(CreateUserValidator userInfo)
         {
+            int groupValue = int.Parse(HttpContext.User.Claims.FirstOrDefault(c => c.Type == "group_id").Value);
+            if (!IsValidGroup(UserGroups.Admin, groupValue))
+            {
+                return BadRequest("You do not have permission to do this");
+            }
+
             var userInDb = await _userService.GetUserByEmail(userInfo.Email);
             if (userInDb is not null) return BadRequest(new
             {
@@ -158,6 +180,8 @@ namespace inventory_management_system_backend.Controllers
         [HttpDelete]
         public async Task<IActionResult> Delete(int userId)
         {
+            int groupValue = int.Parse(HttpContext.User.Claims.FirstOrDefault(c => c.Type == "group_id").Value);
+            if (!IsValidGroup(UserGroups.Admin, groupValue)) return BadRequest("You do not have permission to do this");
             var userInDb = await _userService.GetUserById(userId);
             if (userInDb is null)
             {
@@ -172,16 +196,124 @@ namespace inventory_management_system_backend.Controllers
             return BadRequest("Something went wrong");
         }
 
-        public static void ReadJWT(string jwt)
+        [HttpPut("UpdateGroup")]
+        public async Task<IActionResult> UpdateGroup(UpdateUserGroupValidator updateInfo)
         {
-            var handler = new JwtSecurityTokenHandler();
-            var token = handler.ReadJwtToken(jwt);
+            try
+            {
+                var user = await _userService.GetUserById(updateInfo.UserId) ?? throw new UserNotFoundException();
+                var emailInToken = HttpContext.User.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Email)?.Value;
+                var groupId = int.Parse(HttpContext.User.Claims.FirstOrDefault(c => c.Type == "group_id").Value);
+                if (!HasPermissionOverUser(user, groupId))
+                {
+                    return BadRequest("You do not have permission to do this");
+                }
 
-            var keyId = token.Header.Kid;
-            var audience = token.Audiences.ToList();
-            var claims = token.Claims.Select(claim => (claim.Type, claim.Value)).ToList();
+                if (emailInToken == user.Email)
+                {
+                    return BadRequest("You cannot edit your own user group");
+                }
 
+                await _userService.ChangeUserGroup(updateInfo.UserId, (UserGroups)updateInfo.GroupId);
+            }
+            catch (UserNotFoundException)
+            {
+                return BadRequest("A User with that ID does not exist");
+            }
+            catch (NullReferenceException)
+            {
+                return BadRequest("Unable to read the email in the token");
+            }
 
+            return Ok("User group updated");
+        }
+
+        [HttpPut("CreateUserPassword")]
+        [AllowAnonymous]
+        public async Task<IActionResult> CreateUserPassword(CreateUserValidator userInfo)
+        {
+            var user = await _userService.GetUserByEmail(userInfo.Email);
+            if (user.UserCreatedPassword) return BadRequest("You already have a user created password");
+            if (! await _userService.UserHasCreatedPassword(userInfo.Email, userInfo.Password)) 
+                return BadRequest("Something went wrong");
+          
+            return Ok("Your password is now created!");
+        }
+
+        private object GenerateTokens(string email, int group)
+        {
+            // Generate JWT
+            var issuer = _configuration["Jwt:Issuer"];
+            var audience = _configuration["Jwt:Audience"];
+            var key = Encoding.ASCII.GetBytes(_configuration["Jwt:Key"]);
+
+            var bearerDescriptor = new SecurityTokenDescriptor
+            {
+                Subject = new ClaimsIdentity(new[]
+                    {
+                            new Claim("id", Guid.NewGuid().ToString()),
+                            new Claim("type", "bearer"),
+                            new Claim("group_id", group.ToString()),
+                            new Claim(JwtRegisteredClaimNames.Email, email),
+                            new Claim(JwtRegisteredClaimNames.Jti,
+                                Guid.NewGuid().ToString()),
+                    }
+                ),
+                Expires = DateTime.UtcNow.AddDays(1),
+                Issuer = issuer,
+                Audience = audience,
+                SigningCredentials = new SigningCredentials
+                    (new SymmetricSecurityKey(key),
+                    SecurityAlgorithms.HmacSha512Signature)
+            };
+
+            var refreshDescriptor = new SecurityTokenDescriptor
+            {
+                Subject = new ClaimsIdentity(new[]
+                    {
+                            new Claim("Id", Guid.NewGuid().ToString()),
+                            new Claim("type", "refresh"),
+                            new Claim("group_id", group.ToString()),
+                            new Claim(JwtRegisteredClaimNames.Email, email),
+                            new Claim(JwtRegisteredClaimNames.Jti,
+                            Guid.NewGuid().ToString())
+                        }),
+                Expires = DateTime.UtcNow.AddDays(7),
+                Issuer = issuer,
+                Audience = audience,
+                SigningCredentials = new SigningCredentials
+                    (new SymmetricSecurityKey(key),
+                    SecurityAlgorithms.HmacSha512Signature)
+            };
+
+            var tokenHandler = new JwtSecurityTokenHandler();
+
+            var refresh = tokenHandler.CreateToken(refreshDescriptor);
+            var stringRefresh = tokenHandler.WriteToken(refresh);
+
+            var bearer = tokenHandler.CreateToken(bearerDescriptor);
+            var stringBearer = tokenHandler.WriteToken(bearer);
+
+            return new
+            {
+                Bearer = stringBearer,
+                Refresh = stringRefresh
+            };
+        }
+        private bool IsValidGroup(UserGroups targetUserGroup, int group)
+        {
+            if (group >= (int)targetUserGroup)
+            {
+                return true;
+            }
+
+            return false;
+        }
+        private bool HasPermissionOverUser(User user, int group)
+        {
+            // This method checks if the user in the bearer token has access to work on the user provided in the method parameter
+            if (user.GroupId > group) return false;
+            return true;
         }
     }
 }

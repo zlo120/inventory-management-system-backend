@@ -2,7 +2,9 @@ using Core.Interfaces;
 using Infrastructure;
 using Infrastructure.Repositories;
 using Infrastructure.Services;
+using inventory_management_system_backend.TokenAuthHandler;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -28,12 +30,27 @@ builder.Services.AddAuthentication(options =>
         (Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"])),
         ValidateIssuer = true,
         ValidateAudience = true,
-        ValidateLifetime = false,
+        ValidateLifetime = true,
         ValidateIssuerSigningKey = true
     };
 });
 
-builder.Services.AddAuthorization();
+builder.Services.AddSingleton<
+    IAuthorizationHandler, TokenRequirementAuthorizationHandler>();
+
+//builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("BearerToken", policy =>
+    {
+        policy.AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme);
+        policy.RequireAuthenticatedUser();
+
+
+        // add the custom requirement to the policy
+        policy.Requirements.Add(new TokenRequirement());
+    });
+});
 
 builder.Services.AddSingleton<IConfiguration>(builder.Configuration);
 
@@ -47,6 +64,7 @@ builder.Services.AddTransient<ILocationService, LocationService>();
 builder.Services.AddTransient<ILocationRepository, LocationRepository>();
 builder.Services.AddTransient<IStatusService, StatusService>();
 builder.Services.AddTransient<IStatusRepository, StatusRepository>();
+
 
 builder.Services.AddControllers().AddNewtonsoftJson();
 builder.Services.AddCors();
@@ -68,6 +86,7 @@ builder.Services.AddSwaggerGen(option =>
             Scheme = "Bearer"
         }
     );
+
     option.AddSecurityRequirement(
         new OpenApiSecurityRequirement
         {

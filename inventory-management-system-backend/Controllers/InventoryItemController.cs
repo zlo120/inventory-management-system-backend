@@ -9,7 +9,7 @@ using System.Globalization;
 
 namespace inventory_management_system_backend.Controllers
 {
-    [Authorize]
+    [Authorize(Policy = "BearerToken")]
     [Route("api/[controller]")]
     [ApiController]
     public class InventoryItemController : ControllerBase

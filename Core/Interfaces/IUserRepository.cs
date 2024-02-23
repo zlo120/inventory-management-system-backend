@@ -9,5 +9,7 @@ namespace Core.Interfaces
         Task<User> GetUserById(int id);
         Task<bool> UpdateUser(User user);
         Task<bool> DeleteUser(int id);
+        Task<bool> ChangeUserGroup(int userId, UserGroups group);
+        Task<bool> UserHasCreatedPassword(string email, string password);
     }
 }

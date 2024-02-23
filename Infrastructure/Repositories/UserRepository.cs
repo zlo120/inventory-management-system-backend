@@ -1,5 +1,7 @@
-﻿using Core.Interfaces;
+﻿using Core.DataValidators.User;
+using Core.Interfaces;
 using Core.Models;
+using Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
@@ -8,11 +10,13 @@ namespace Infrastructure.Repositories
     public class UserRepository : IUserRepository
     {
         private readonly Context _context;
+        private readonly ISecurityService _securityService;
         private readonly ILogger<UserRepository> _logger;
-        public UserRepository(Context context, ILogger<UserRepository> logger)
+        public UserRepository(Context context, ILogger<UserRepository> logger, ISecurityService securityService)
         {
             _context = context;
             _logger = logger;
+            _securityService = securityService;
         }
 
         public async Task<bool> Create(User user)
@@ -82,7 +86,53 @@ namespace Infrastructure.Repositories
             }
             catch (Exception ex)
             {
-                _logger.LogCritical($"Critical error occured when saving changes: {ex}", DateTime.UtcNow.ToLongTimeString());
+                _logger.LogCritical($"Critical error occurred when saving changes: {ex}", DateTime.UtcNow.ToLongTimeString());
+                return false;
+            }
+        }
+
+        public async Task<bool> ChangeUserGroup(int userId, UserGroups group)
+        {
+            var user = await GetUserById(userId) ?? throw new ArgumentNullException(nameof(userId));
+
+            user.GroupId = (int)group;
+
+            _context.Update(user);
+
+            try
+            {
+                await _context.SaveChangesAsync();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogCritical($"Critical error occurred when saving changes: {ex}", DateTime.UtcNow.ToLongTimeString());
+                return false;
+            }
+        }
+
+        public async Task<bool> UserHasCreatedPassword(string email, string password)
+        {
+            var user = await GetUserByEmail(email);
+
+            await _securityService.Update(new UpdateUserValidator
+            {
+                Email = email,
+                Password = password,
+            });
+
+            user.UserCreatedPassword = true;
+
+            _context.Update(user);
+
+            try
+            {
+                await _context.SaveChangesAsync();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogCritical($"Critical error occurred when saving changes: {ex}", DateTime.UtcNow.ToLongTimeString());
                 return false;
             }
         }

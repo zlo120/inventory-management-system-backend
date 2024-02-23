@@ -49,7 +49,6 @@ namespace Infrastructure.Repositories
                 return false;
             }
 
-            security.User = usersSecuredData.User;
             security.UserId = usersSecuredData.UserId;
             security.Salt = usersSecuredData.Salt;
             security.HashedPassword = usersSecuredData.HashedPassword;

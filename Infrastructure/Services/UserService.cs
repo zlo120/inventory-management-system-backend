@@ -42,5 +42,15 @@ namespace Infrastructure.Services
         {
             return await _userRepository.DeleteUser(id);
         }
+
+        public async Task<bool> ChangeUserGroup(int userId, UserGroups group)
+        {
+            return await _userRepository.ChangeUserGroup(userId, group);
+        }
+
+        public async Task<bool> UserHasCreatedPassword(string email, string password)
+        {
+            return await _userRepository.UserHasCreatedPassword(email, password);
+        }
     }
 }
