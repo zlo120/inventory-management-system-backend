@@ -7,6 +7,7 @@ namespace Core.Interfaces
         Task<bool> Create(User user);
         Task<User> GetUserByEmail(string email);
         Task<User> GetUserById(int id);
+        Task<ICollection<User>> GetAllUsers();
         Task<bool> UpdateUser(User user);
         Task<bool> DeleteUser(int id);
         Task<bool> ChangeUserGroup(int userId, UserGroups group);

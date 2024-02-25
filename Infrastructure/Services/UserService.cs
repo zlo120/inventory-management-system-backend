@@ -18,7 +18,8 @@ namespace Infrastructure.Services
         {
             var user = new User()
             {
-                Email = userInfo.Email
+                Email = userInfo.Email,
+                RandomlyGeneratedPassword = userInfo.Password
             };
 
             return await _userRepository.Create(user);
@@ -51,6 +52,11 @@ namespace Infrastructure.Services
         public async Task<bool> UserHasCreatedPassword(string email, string password)
         {
             return await _userRepository.UserHasCreatedPassword(email, password);
+        }
+
+        public async Task<ICollection<User>> GetAllUsers()
+        {
+            return await _userRepository.GetAllUsers();
         }
     }
 }

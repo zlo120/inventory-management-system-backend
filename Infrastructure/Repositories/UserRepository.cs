@@ -1,7 +1,6 @@
 ﻿using Core.DataValidators.User;
 using Core.Interfaces;
 using Core.Models;
-using Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
@@ -135,6 +134,11 @@ namespace Infrastructure.Repositories
                 _logger.LogCritical($"Critical error occurred when saving changes: {ex}", DateTime.UtcNow.ToLongTimeString());
                 return false;
             }
+        }
+
+        public async Task<ICollection<User>> GetAllUsers()
+        {
+            return await _context.Users.ToListAsync();
         }
     }
 }

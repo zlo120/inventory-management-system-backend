@@ -46,6 +46,13 @@ namespace inventory_management_system_backend.Controllers
             return Ok(user);
         }
 
+        [HttpGet("GetAllUsers")]
+        public async Task<IActionResult> GetAllUsers()
+        {
+            var users = await _userService.GetAllUsers();
+            return Ok(users);
+        }
+
         [HttpPost("Authenticate")]
         [AllowAnonymous]
         public async Task<IActionResult> Authenticate(CreateUserValidator userInfo)
